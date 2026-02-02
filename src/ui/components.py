@@ -25,29 +25,16 @@ def render_metric_card(
         else:
             color = "#26a69a" if is_positive else "#ef5350"
 
-        delta_html = f"""
-        <span style="color:{color}; font-weight:bold; margin-left:8px; font-size: 0.9rem;">
-            {delta}
-        </span>
-        """
+        delta_html = f'<span style="color:{color}; font-weight:bold; margin-left:8px; font-size: 0.9rem;">{delta}</span>'
 
     st.markdown(
-        f"""
-        <div data-testid="stMetric" style="
-            background-color: #ffffff;
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #f0f2f6;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            margin-bottom: 10px;
-        ">
-            <div style="font-size: 0.9rem; color: #6b7c93; margin-bottom: 4px;">{label}</div>
-            <div style="display: flex; align-items: baseline;">
-                <span style="font-size: 1.6rem; font-weight: 700; color: #1a1f36;">{value}</span>
-                {delta_html}
-            </div>
-        </div>
-        """,
+        f"""<div data-testid="stMetric" style="background-color: #ffffff; padding: 15px; border-radius: 8px; border: 1px solid #f0f2f6; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 10px;">
+<div style="font-size: 0.9rem; color: #6b7c93; margin-bottom: 4px;">{label}</div>
+<div style="display: flex; align-items: baseline;">
+<span style="font-size: 1.6rem; font-weight: 700; color: #1a1f36;">{value}</span>
+{delta_html}
+</div>
+</div>""",
         unsafe_allow_html=True,
     )
 
@@ -76,10 +63,14 @@ def render_chart(df: pd.DataFrame, height: int = 500):
         if pd.api.types.is_datetime64_any_dtype(chart_df["日期"]):
             chart_df["日期"] = chart_df["日期"].dt.strftime("%Y-%m-%d")
 
-    # Candlestick Data
     # Rename columns to match lightweight-charts expectation
     ohlc_data = []
     volume_data = []
+
+    required_cols = ["日期", "开盘", "最高", "最低", "收盘", "成交量"]
+    if not all(col in chart_df.columns for col in required_cols):
+        st.error(f"Missing columns for chart. Available: {chart_df.columns.tolist()}")
+        return
 
     for _, row in chart_df.iterrows():
         time_str = str(row["日期"])
@@ -138,11 +129,14 @@ def render_chart(df: pd.DataFrame, height: int = 500):
         "options": {
             "color": "#26a69a",
             "priceFormat": {"type": "volume"},
-            "priceScaleId": "",  # Overlay
+            "priceScaleId": "volume_scale",  # Separate scale ID
+        },
+        "priceScale": {
             "scaleMargins": {
                 "top": 0.8,  # Volume takes bottom 20%
                 "bottom": 0,
             },
+            "independent": True,
         },
     }
 

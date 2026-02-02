@@ -62,13 +62,11 @@ def render_market_overview():
     with col3:
         leader_color = "#ef5350" if leader_change > 0 else "#26a69a"
         st.markdown(
-            f"""
-            <div style="background-color: #fff; padding: 15px; border-radius: 8px; border: 1px solid #f0f2f6;">
-                <div style="color: #6b7c93; font-size: 0.9rem;">领涨股 (Leader)</div>
-                <div style="font-size: 1.4rem; font-weight: 700;">{leader_name}</div>
-                <div style="color: {leader_color}; font-weight: bold;">{leader_change:+.2f}%</div>
-            </div>
-            """,
+            f"""<div style="background-color: #fff; padding: 15px; border-radius: 8px; border: 1px solid #f0f2f6;">
+<div style="color: #6b7c93; font-size: 0.9rem;">领涨股 (Leader)</div>
+<div style="font-size: 1.4rem; font-weight: 700;">{leader_name}</div>
+<div style="color: {leader_color}; font-weight: bold;">{leader_change:+.2f}%</div>
+</div>""",
             unsafe_allow_html=True,
         )
 

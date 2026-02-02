@@ -1,9 +1,13 @@
 import streamlit as st
+import warnings
 from streamlit_autorefresh import st_autorefresh
 from src.ui.styles import inject_custom_css
 from src.ui.layout import render_sidebar, render_header
 from src.ui.individual import render_individual_analysis
 from src.ui.market import render_market_overview
+
+# Suppress pandas future warnings
+warnings.simplefilter(action="ignore", category=FutureWarning)
 
 # 1. Page Config (Must be first)
 st.set_page_config(
