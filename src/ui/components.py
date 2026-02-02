@@ -1,0 +1,156 @@
+import streamlit as st
+import pandas as pd
+from typing import Optional
+from lightweight_charts_v5 import lightweight_charts_v5_component
+
+
+def render_metric_card(
+    label: str, value: str, delta: Optional[str] = None, color_inverse: bool = True
+):
+    """
+    Render a SaaS-style metric card.
+
+    Args:
+        label: Metric name
+        value: Main value (string)
+        delta: Change value (string, e.g. "+1.2%")
+        color_inverse: If True, Red = Positive (China Standard).
+    """
+    delta_html = ""
+    if delta:
+        # Determine color
+        is_positive = delta.startswith("+")
+        if color_inverse:
+            color = "#ef5350" if is_positive else "#26a69a"
+        else:
+            color = "#26a69a" if is_positive else "#ef5350"
+
+        delta_html = f"""
+        <span style="color:{color}; font-weight:bold; margin-left:8px; font-size: 0.9rem;">
+            {delta}
+        </span>
+        """
+
+    st.markdown(
+        f"""
+        <div data-testid="stMetric" style="
+            background-color: #ffffff;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #f0f2f6;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            margin-bottom: 10px;
+        ">
+            <div style="font-size: 0.9rem; color: #6b7c93; margin-bottom: 4px;">{label}</div>
+            <div style="display: flex; align-items: baseline;">
+                <span style="font-size: 1.6rem; font-weight: 700; color: #1a1f36;">{value}</span>
+                {delta_html}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_chart(df: pd.DataFrame, height: int = 500):
+    """
+    Render a TradingView-style candlestick chart with Volume.
+
+    Args:
+        df: DataFrame with '日期', '开盘', '最高', '最低', '收盘', '成交量'
+        height: Chart height in px
+    """
+    if df.empty:
+        st.warning("暂无数据 (No Data)")
+        return
+
+    # Prepare Data
+    # Ensure '日期' is string YYYY-MM-DD
+    # If '日期' is index, reset it.
+    chart_df = df.copy()
+    if "日期" not in chart_df.columns and isinstance(chart_df.index, pd.DatetimeIndex):
+        chart_df = chart_df.reset_index()
+        chart_df["日期"] = chart_df["日期"].dt.strftime("%Y-%m-%d")
+    elif "日期" in chart_df.columns:
+        # If it's datetime object
+        if pd.api.types.is_datetime64_any_dtype(chart_df["日期"]):
+            chart_df["日期"] = chart_df["日期"].dt.strftime("%Y-%m-%d")
+
+    # Candlestick Data
+    # Rename columns to match lightweight-charts expectation
+    ohlc_data = []
+    volume_data = []
+
+    for _, row in chart_df.iterrows():
+        time_str = str(row["日期"])
+        open_p = float(row["开盘"])
+        close_p = float(row["收盘"])
+
+        # Color for volume: Red if up, Green if down
+        vol_color = "#ef5350" if close_p >= open_p else "#26a69a"
+
+        ohlc_data.append(
+            {
+                "time": time_str,
+                "open": open_p,
+                "high": float(row["最高"]),
+                "low": float(row["最低"]),
+                "close": close_p,
+            }
+        )
+
+        volume_data.append(
+            {"time": time_str, "value": float(row["成交量"]), "color": vol_color}
+        )
+
+    # Chart Configuration
+    chart_options = {
+        "layout": {
+            "background": {"color": "#ffffff"},
+            "textColor": "#333",
+        },
+        "grid": {
+            "vertLines": {"color": "#f0f0f0"},
+            "horzLines": {"color": "#f0f0f0"},
+        },
+        "crosshair": {
+            "mode": 0  # Normal
+        },
+        "timeScale": {"borderColor": "#e0e0e0"},
+    }
+
+    # Series Configuration
+    candlestick_series = {
+        "type": "Candlestick",
+        "data": ohlc_data,
+        "options": {
+            "upColor": "#ef5350",
+            "downColor": "#26a69a",
+            "borderVisible": False,
+            "wickUpColor": "#ef5350",
+            "wickDownColor": "#26a69a",
+        },
+    }
+
+    volume_series = {
+        "type": "Histogram",
+        "data": volume_data,
+        "options": {
+            "color": "#26a69a",
+            "priceFormat": {"type": "volume"},
+            "priceScaleId": "",  # Overlay
+            "scaleMargins": {
+                "top": 0.8,  # Volume takes bottom 20%
+                "bottom": 0,
+            },
+        },
+    }
+
+    # Render
+    charts_config = [
+        {"chart": chart_options, "series": [candlestick_series, volume_series]}
+    ]
+
+    lightweight_charts_v5_component(
+        name="main_chart", charts=charts_config, height=height
+    )

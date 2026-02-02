@@ -1,0 +1,14 @@
+[project]
+name = "stock-analysis"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "akshare>=1.18.21",
+    "pandas>=2.3.3",
+    "pytest>=8.4.2",
+    "streamlit>=1.50.0",
+    "streamlit-autorefresh>=1.0.1",
+    "streamlit-lightweight-charts-v5>=0.1.8",
+]
