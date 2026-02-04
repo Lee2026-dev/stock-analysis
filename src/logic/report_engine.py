@@ -8,7 +8,8 @@ from src.data.news_fetcher import fetch_stock_news
 from src.logic.indicators import calculate_indicators
 from src.logic.analyzer import calculate_technical_score
 from src.logic.llm_agent import analyze_news_sentiment
-from src.utils.cache import save_report
+from src.logic.verification import verify_prediction
+from src.utils.cache import save_report, load_previous_report
 
 
 def generate_report_for_stock(stock_code: str, date: str) -> Dict[str, Any]:
@@ -40,7 +41,7 @@ def generate_report_for_stock(stock_code: str, date: str) -> Dict[str, Any]:
     up_prob = tech_score * 0.6 + sentiment_score * 0.4
     up_prob = min(99, max(1, int(up_prob)))
 
-    return {
+    report = {
         "stock_code": stock_code,
         "date": date,
         "technical_analysis": {
@@ -53,6 +54,14 @@ def generate_report_for_stock(stock_code: str, date: str) -> Dict[str, Any]:
         "prediction": {"up_probability": up_prob, "down_probability": 100 - up_prob},
         "generated_at": datetime.datetime.now().isoformat(),
     }
+
+    prev_report = load_previous_report(date, stock_code)
+    if prev_report:
+        verification = verify_prediction(prev_report, report)
+        if verification:
+            report["verification"] = verification
+
+    return report
 
 
 def generate_all_reports(watchlist: List[str]) -> None:

@@ -3,6 +3,7 @@ import datetime
 from typing import Dict, Any, List
 from src.utils.cache import load_report
 from src.logic.report_engine import generate_all_reports
+from src.logic.statistics import calculate_overall_accuracy
 
 
 def render_score_bar(score: int):
@@ -58,6 +59,7 @@ def render_report_card(stock_code: str, report: Dict[str, Any]):
     tech = report.get("technical_analysis", {})
     news = report.get("news_analysis", {})
     pred = report.get("prediction", {})
+    verification = report.get("verification")
 
     score = tech.get("score", 50)
     up_prob = pred.get("up_probability", 50)
@@ -76,6 +78,29 @@ def render_report_card(stock_code: str, report: Dict[str, Any]):
                 unsafe_allow_html=True,
             )
             render_score_bar(score)
+
+            if verification:
+                is_correct = verification.get("is_correct", False)
+                icon = "✅" if is_correct else "❌"
+                status_text = "预测正确" if is_correct else "预测失败"
+                status_color = "#10b981" if is_correct else "#ef4444"
+                pred_dir = verification.get("predicted_direction", "")
+                actual_dir = verification.get("actual_direction", "")
+
+                st.markdown(
+                    f"""
+                    <div style='margin-top: 10px; padding: 8px; background: rgba(255,255,255,0.03); 
+                                border-radius: 6px; border-left: 3px solid {status_color};'>
+                        <div style='font-size: 0.9em; color: {status_color}; font-weight: bold;'>
+                            {icon} {status_text}
+                        </div>
+                        <div style='font-size: 0.75em; color: #64748b; margin-top: 4px;'>
+                            预测{pred_dir} → 实际{actual_dir}
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
 
         with cols[1]:
             st.markdown("**🤖 AI 核心观点**")
@@ -159,6 +184,87 @@ def render_full_report(stock_code: str, report: Dict[str, Any]):
             st.caption("暂无明显风险")
 
 
+def render_accuracy_stats_panel(watchlist: List[str]):
+    """
+    Render overall accuracy statistics panel.
+    """
+    stats = calculate_overall_accuracy(watchlist)
+    overall = stats.get("overall", {})
+
+    st.markdown(
+        """
+        <div style='background: linear-gradient(135deg, #141b2d 0%, #0f172a 100%); 
+                    padding: 1.5rem; border-radius: 12px; border: 1px solid #1e293b; 
+                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3); margin-bottom: 1.5rem;'>
+            <h3 style='margin: 0 0 1rem 0; color: #f8fafc;'>📊 预测准确率统计</h3>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        acc_7d = overall.get("7d", 0)
+        count_7d = overall.get("count_7d", 0)
+        color_7d = (
+            "#10b981" if acc_7d >= 60 else "#fbbf24" if acc_7d >= 50 else "#ef4444"
+        )
+        st.markdown(
+            f"""
+            <div style='text-align: center; padding: 1.5rem; background: rgba(255,255,255,0.03); 
+                        border-radius: 10px; border: 2px solid {color_7d};'>
+                <div style='font-size: 0.9em; color: #94a3b8; margin-bottom: 0.5rem;'>近7日准确率</div>
+                <div style='font-size: 2.5em; font-weight: bold; color: {color_7d};'>{acc_7d}%</div>
+                <div style='font-size: 0.8em; color: #64748b; margin-top: 0.5rem;'>
+                    共 {count_7d} 次预测
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with col2:
+        acc_30d = overall.get("30d", 0)
+        count_30d = overall.get("count_30d", 0)
+        color_30d = (
+            "#10b981" if acc_30d >= 60 else "#fbbf24" if acc_30d >= 50 else "#ef4444"
+        )
+        st.markdown(
+            f"""
+            <div style='text-align: center; padding: 1.5rem; background: rgba(255,255,255,0.03); 
+                        border-radius: 10px; border: 2px solid {color_30d};'>
+                <div style='font-size: 0.9em; color: #94a3b8; margin-bottom: 0.5rem;'>近30日准确率</div>
+                <div style='font-size: 2.5em; font-weight: bold; color: {color_30d};'>{acc_30d}%</div>
+                <div style='font-size: 0.8em; color: #64748b; margin-top: 0.5rem;'>
+                    共 {count_30d} 次预测
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with col3:
+        acc_all = overall.get("all", 0)
+        count_all = overall.get("count_all", 0)
+        color_all = (
+            "#10b981" if acc_all >= 60 else "#fbbf24" if acc_all >= 50 else "#ef4444"
+        )
+        st.markdown(
+            f"""
+            <div style='text-align: center; padding: 1.5rem; background: rgba(255,255,255,0.03); 
+                        border-radius: 10px; border: 2px solid {color_all};'>
+                <div style='font-size: 0.9em; color: #94a3b8; margin-bottom: 0.5rem;'>历史总准确率</div>
+                <div style='font-size: 2.5em; font-weight: bold; color: {color_all};'>{acc_all}%</div>
+                <div style='font-size: 0.8em; color: #64748b; margin-top: 0.5rem;'>
+                    共 {count_all} 次预测
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+
 def render_daily_reports():
     """
     Main entry point for the Daily Reports page.
@@ -188,6 +294,8 @@ def render_daily_reports():
 
     # List view
     st.markdown(f"**📅 日期: {today}** | 监控股票: {len(watchlist)} 只")
+
+    render_accuracy_stats_panel(watchlist)
 
     reports_found = 0
     for code in watchlist:

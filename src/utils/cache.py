@@ -33,3 +33,29 @@ def load_report(date: str, stock_code: str) -> Optional[Dict]:
 
 def report_exists(date: str, stock_code: str) -> bool:
     return get_report_path(date, stock_code).exists()
+
+
+def load_previous_report(date: str, stock_code: str) -> Optional[Dict]:
+    """
+    Load report from previous trading day.
+
+    Args:
+        date: Current date in YYYYMMDD format
+        stock_code: Stock code
+
+    Returns:
+        Previous day's report if exists, None otherwise
+    """
+    from datetime import datetime, timedelta
+
+    current_date = datetime.strptime(date, "%Y%m%d")
+
+    for days_back in range(1, 8):
+        prev_date = current_date - timedelta(days=days_back)
+        prev_date_str = prev_date.strftime("%Y%m%d")
+
+        prev_report = load_report(prev_date_str, stock_code)
+        if prev_report is not None:
+            return prev_report
+
+    return None
