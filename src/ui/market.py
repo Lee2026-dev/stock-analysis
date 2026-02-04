@@ -19,14 +19,13 @@ def render_market_overview():
         st.error("无法获取北向资金数据。")
         return
 
+    df = df.loc[:, ~df.columns.duplicated()]
+
     # Data Processing
-    # Columns: '日期', '当日成交净买额', '历史累计净买额', ...
-    # Ensure date is string
+    # Ensure date is string YYYY-MM-DD
     if "日期" in df.columns:
-        if pd.api.types.is_datetime64_any_dtype(df["日期"]):
-            df["日期"] = df["日期"].dt.strftime("%Y-%m-%d")
-        else:
-            df["日期"] = df["日期"].astype(str)
+        df["日期"] = pd.to_datetime(df["日期"], errors="coerce").dt.strftime("%Y-%m-%d")
+        df = df.dropna(subset=["日期"])
 
     # Latest Data
     last_row = df.iloc[-1]
@@ -62,9 +61,14 @@ def render_market_overview():
     with col3:
         leader_color = "#ef5350" if leader_change > 0 else "#26a69a"
         st.markdown(
-            f"""<div style="background-color: #fff; padding: 15px; border-radius: 8px; border: 1px solid #f0f2f6;">
-<div style="color: #6b7c93; font-size: 0.9rem;">领涨股 (Leader)</div>
-<div style="font-size: 1.4rem; font-weight: 700;">{leader_name}</div>
+            f"""<div style="
+                background: linear-gradient(135deg, #141b2d 0%, #0f172a 100%); 
+                padding: 15px; 
+                border-radius: 12px; 
+                border: 1px solid #1e293b;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);">
+<div style="color: #94a3b8; font-size: 0.9rem;">领涨股 (Leader)</div>
+<div style="font-size: 1.4rem; font-weight: 700; color: #f8fafc;">{leader_name}</div>
 <div style="color: {leader_color}; font-weight: bold;">{leader_change:+.2f}%</div>
 </div>""",
             unsafe_allow_html=True,
@@ -82,12 +86,12 @@ def render_market_overview():
 
     chart_options = {
         "layout": {
-            "background": {"color": "#ffffff"},
-            "textColor": "#333",
+            "background": {"type": "solid", "color": "#0a0e27"},
+            "textColor": "#f8fafc",
         },
         "grid": {
-            "vertLines": {"color": "#f0f0f0"},
-            "horzLines": {"color": "#f0f0f0"},
+            "vertLines": {"color": "#1e293b"},
+            "horzLines": {"color": "#1e293b"},
         },
         "rightPriceScale": {
             "scaleMargins": {
