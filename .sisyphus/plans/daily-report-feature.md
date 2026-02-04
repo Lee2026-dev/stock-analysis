@@ -516,7 +516,7 @@ Parallel Speedup: ~35%（Wave 1中5个任务并行）
 
 ### Wave 2 - 核心逻辑层（部分并行）
 
-- [ ] 6. 实现技术面评分引擎（analyzer.py）
+- [x] 6. 实现技术面评分引擎（analyzer.py）
 
   **What to do**:
   - 创建`src/logic/analyzer.py`
@@ -595,7 +595,7 @@ Parallel Speedup: ~35%（Wave 1中5个任务并行）
 
 ---
 
-- [ ] 7. 实现智能触发逻辑（scheduler.py）
+- [x] 7. 实现智能触发逻辑（scheduler.py）
 
   **What to do**:
   - 创建`src/utils/scheduler.py`
@@ -655,7 +655,7 @@ Parallel Speedup: ~35%（Wave 1中5个任务并行）
 
 ---
 
-- [ ] 8. 实现报告生成协调器（report_engine.py）
+- [x] 8. 实现报告生成协调器（report_engine.py）
 
   **What to do**:
   - 创建`src/logic/report_engine.py`
