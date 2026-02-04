@@ -68,6 +68,23 @@ def fetch_daily_history(symbol: str, start_date: str, end_date: str) -> pd.DataF
         return pd.DataFrame(columns=DAILY_HISTORY_COLUMNS)
 
 
+@st.cache_data(ttl=60, show_spinner=False)
+def fetch_spot_data(symbols: list[str]) -> pd.DataFrame:
+    """
+    Fetch real-time spot data for a list of symbols.
+    """
+    try:
+        df = ak.stock_zh_a_spot_em()
+        if df is None or df.empty:
+            return pd.DataFrame()
+
+        df_filtered = df[df["代码"].isin(symbols)].copy()
+        return df_filtered
+    except Exception as e:
+        print(f"Error fetching spot data: {e}")
+        return pd.DataFrame()
+
+
 @st.cache_data(ttl=300, show_spinner=False)
 def fetch_northbound_flow(symbol: str = "北向资金") -> pd.DataFrame:
     """

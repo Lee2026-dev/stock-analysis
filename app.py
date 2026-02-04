@@ -5,6 +5,9 @@ from src.ui.styles import inject_custom_css
 from src.ui.layout import render_sidebar, render_header
 from src.ui.individual import render_individual_analysis
 from src.ui.market import render_market_overview
+from src.ui.reports import render_daily_reports
+from src.utils.scheduler import should_generate_report
+from src.logic.report_engine import generate_all_reports
 
 # Suppress pandas future warnings
 warnings.simplefilter(action="ignore", category=FutureWarning)
@@ -40,6 +43,14 @@ if "个股" in page:
     )
 elif "市场" in page:
     render_market_overview()
+elif "报告" in page:
+    # Auto-trigger check
+    if should_generate_report(user_inputs["watchlist"]):
+        with st.spinner("⏳ 正在生成今日智能分析报告（技术面 + 消息面 + AI预测）..."):
+            generate_all_reports(user_inputs["watchlist"])
+            st.toast("✅ 报告生成完成！", icon="🎉")
+
+    render_daily_reports()
 
 if __name__ == "__main__":
     import sys

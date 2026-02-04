@@ -728,7 +728,7 @@ Parallel Speedup: ~35%（Wave 1中5个任务并行）
 
 ---
 
-- [ ] 9. 更新CSS样式（styles.py）
+- [x] 9. 更新CSS样式（styles.py）
 
   **What to do**:
   - 修改`src/ui/styles.py`
@@ -785,7 +785,7 @@ Parallel Speedup: ~35%（Wave 1中5个任务并行）
 
 ---
 
-- [ ] 10. 重设计侧边栏（layout.py）
+- [x] 10. 重设计侧边栏（layout.py）
 
   **What to do**:
   - 修改`src/ui/layout.py`
@@ -845,7 +845,7 @@ Parallel Speedup: ~35%（Wave 1中5个任务并行）
 
 ### Wave 3 - UI展示层（串行为主）
 
-- [ ] 11. 创建每日报告页面（reports.py）
+- [x] 11. 创建每日报告页面（reports.py）
 
   **What to do**:
   - 创建`src/ui/reports.py`
@@ -912,7 +912,7 @@ Parallel Speedup: ~35%（Wave 1中5个任务并行）
 
 ---
 
-- [ ] 12. 集成到主应用（app.py）
+- [x] 12. 集成到主应用（app.py）
 
   **What to do**:
   - 修改`app.py`
@@ -978,7 +978,7 @@ Parallel Speedup: ~35%（Wave 1中5个任务并行）
 
 ---
 
-- [ ] 13. 端到端集成测试
+- [x] 13. 端到端集成测试
 
   **What to do**:
   - 完整测试流程：
@@ -1038,7 +1038,7 @@ Parallel Speedup: ~35%（Wave 1中5个任务并行）
 
 ---
 
-- [ ] 14. 补充单元测试
+- [x] 14. 补充单元测试
 
   **What to do**:
   - 为核心模块添加pytest单元测试：
