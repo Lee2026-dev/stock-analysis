@@ -28,10 +28,16 @@ def render_metric_card(
         delta_html = f'<span style="color:{color}; font-weight:bold; margin-left:8px; font-size: 0.9rem;">{delta}</span>'
 
     st.markdown(
-        f"""<div data-testid="stMetric" style="background-color: #ffffff; padding: 15px; border-radius: 8px; border: 1px solid #f0f2f6; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 10px;">
-<div style="font-size: 0.9rem; color: #6b7c93; margin-bottom: 4px;">{label}</div>
+        f"""<div data-testid="stMetric" style="
+            background: linear-gradient(135deg, #141b2d 0%, #0f172a 100%); 
+            padding: 15px; 
+            border-radius: 12px; 
+            border: 1px solid #1e293b; 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3); 
+            margin-bottom: 10px;">
+<div style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 4px;">{label}</div>
 <div style="display: flex; align-items: baseline;">
-<span style="font-size: 1.6rem; font-weight: 700; color: #1a1f36;">{value}</span>
+<span style="font-size: 1.6rem; font-weight: 700; color: #f8fafc;">{value}</span>
 {delta_html}
 </div>
 </div>""",
@@ -59,11 +65,17 @@ def render_chart(df: pd.DataFrame, height: int = 500):
         chart_df = chart_df.reset_index()
         chart_df["日期"] = chart_df["日期"].dt.strftime("%Y-%m-%d")
     elif "日期" in chart_df.columns:
-        # If it's datetime object
         if pd.api.types.is_datetime64_any_dtype(chart_df["日期"]):
             chart_df["日期"] = chart_df["日期"].dt.strftime("%Y-%m-%d")
+        else:
+            chart_df["日期"] = pd.to_datetime(
+                chart_df["日期"], errors="coerce"
+            ).dt.strftime("%Y-%m-%d")
 
-    # Rename columns to match lightweight-charts expectation
+    chart_df = chart_df.drop_duplicates(subset=["日期"]).sort_values("日期")
+
+    chart_df = chart_df.dropna(subset=["日期"])
+
     ohlc_data = []
     volume_data = []
 
@@ -97,20 +109,21 @@ def render_chart(df: pd.DataFrame, height: int = 500):
     # Chart Configuration
     chart_options = {
         "layout": {
-            "background": {"color": "#ffffff"},
-            "textColor": "#333",
+            "background": {"type": "solid", "color": "#0a0e27"},
+            "textColor": "#f8fafc",
         },
         "grid": {
-            "vertLines": {"color": "#f0f0f0"},
-            "horzLines": {"color": "#f0f0f0"},
+            "vertLines": {"color": "#1e293b"},
+            "horzLines": {"color": "#1e293b"},
         },
-        "crosshair": {
-            "mode": 0  # Normal
+        "crosshair": {"mode": 0},
+        "timeScale": {"borderColor": "#334155"},
+        "rightPriceScale": {
+            "mode": 0,
+            "scaleMargins": {"top": 0.1, "bottom": 0.3},
         },
-        "timeScale": {"borderColor": "#e0e0e0"},
     }
 
-    # Series Configuration
     candlestick_series = {
         "type": "Candlestick",
         "data": ohlc_data,
@@ -120,6 +133,7 @@ def render_chart(df: pd.DataFrame, height: int = 500):
             "borderVisible": False,
             "wickUpColor": "#ef5350",
             "wickDownColor": "#26a69a",
+            "priceScaleId": "right",
         },
     }
 
@@ -129,20 +143,20 @@ def render_chart(df: pd.DataFrame, height: int = 500):
         "options": {
             "color": "#26a69a",
             "priceFormat": {"type": "volume"},
-            "priceScaleId": "volume_scale",  # Separate scale ID
-        },
-        "priceScale": {
+            "priceScaleId": "volume",
             "scaleMargins": {
-                "top": 0.8,  # Volume takes bottom 20%
+                "top": 0.8,
                 "bottom": 0,
             },
-            "independent": True,
         },
     }
 
-    # Render
     charts_config = [
-        {"chart": chart_options, "series": [candlestick_series, volume_series]}
+        {
+            "chart": chart_options,
+            "series": [candlestick_series, volume_series],
+            "height": height,
+        }
     ]
 
     lightweight_charts_v5_component(

@@ -156,23 +156,55 @@ def render_sidebar():
                         st.markdown(f"**👉 当前选中: {code}**")
                     render_watchlist_card(code, spot_df)
 
-            # Manage Watchlist
-            with st.expander("⚙️ 管理自选股"):
-                new_stock = st.text_input("输入代码 (如 000001)", max_chars=6)
-                if st.button("添加股票"):
-                    if new_stock and new_stock not in st.session_state.watchlist:
-                        st.session_state.watchlist.append(new_stock)
-                        st.rerun()
+            # Quick Add Row (Compact)
+            st.markdown("### ➕ 快速添加")
+            col_add, col_btn = st.columns([3, 1])
+            with col_add:
+                new_stock = st.text_input(
+                    "quick_add",
+                    placeholder="输入代码 (如 000001)",
+                    label_visibility="collapsed",
+                    max_chars=6,
+                    key="quick_add_input",
+                )
+            with col_btn:
+                if st.button("➕", help="添加股票", key="add_stock_btn"):
+                    if new_stock:
+                        import re
 
-                if len(st.session_state.watchlist) > 1:
-                    to_remove = st.selectbox("移除股票", st.session_state.watchlist)
-                    if st.button("确认移除"):
-                        st.session_state.watchlist.remove(to_remove)
-                        if st.session_state.selected_stock == to_remove:
-                            st.session_state.selected_stock = (
-                                st.session_state.watchlist[0]
-                            )
-                        st.rerun()
+                        # Validate: 6 digits only
+                        if re.match(r"^\d{6}$", new_stock):
+                            if new_stock not in st.session_state.watchlist:
+                                st.session_state.watchlist.append(new_stock)
+                                st.rerun()
+                            else:
+                                st.warning(f"股票 {new_stock} 已在自选列表中")
+                        else:
+                            st.error("请输入6位数字代码")
+
+            # Manage Watchlist (Clean Removal)
+            with st.expander("⚙️ 管理自选股"):
+                st.caption("💡 取消勾选以移除股票")
+                new_watchlist = st.multiselect(
+                    "移除股票",
+                    options=st.session_state.watchlist,
+                    default=st.session_state.watchlist,
+                    label_visibility="collapsed",
+                    key="watchlist_manager",
+                )
+
+                # Detect removals
+                if len(new_watchlist) < len(st.session_state.watchlist):
+                    removed_stocks = set(st.session_state.watchlist) - set(
+                        new_watchlist
+                    )
+                    st.session_state.watchlist = new_watchlist
+
+                    # Edge case: If selected stock was removed
+                    if st.session_state.selected_stock in removed_stocks:
+                        if len(new_watchlist) > 0:
+                            st.session_state.selected_stock = new_watchlist[0]
+                    st.rerun()
 
             st.markdown("---")
 
